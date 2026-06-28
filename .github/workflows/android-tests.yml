@@ -17,7 +17,6 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # Atualizado para 24 para acompanhar o padrão atual do GitHub Actions e do Appium 3+
           node-version: 24
           cache: 'npm'
 
@@ -52,8 +51,11 @@ jobs:
             echo "Aguardando o emulador finalizar o boot por completo..."
             adb wait-for-device
             
-            echo "🛠️ PRE-INSTALL: Instalando o APK principal..."
-            adb install ./apps/android.wdio.native.app.v2.2.0.apk
+            echo "🔎 Verificando arquivos na pasta apps..."
+            ls -la $GITHUB_WORKSPACE/apps/ || echo "Aviso: pasta apps não encontrada na raiz!"
+            
+            echo "🛠️ PRE-INSTALL: Instalando o APK principal usando caminho absoluto..."
+            adb install "$GITHUB_WORKSPACE/apps/android.wdio.native.app.v2.2.0.apk"
             
             echo "Verificando se o aplicativo foi instalado com sucesso:"
             adb shell pm list packages | grep wdiodemoapp || echo "Aviso: App não listado via grep, mas prosseguindo..."
