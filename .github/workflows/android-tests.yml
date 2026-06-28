@@ -45,7 +45,6 @@ jobs:
           arch: x86_64
           profile: Nexus 6
           force-avd-creation: false
-          # Otimizado para não quebrar a aceleração por software no ambiente Linux
           emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-metrics
           disable-spellchecker: true
           script: |
@@ -63,3 +62,10 @@ jobs:
             
             echo "Disparando a suíte de testes com o WebdriverIO..."
             npx wdio run ./config/wdio.android.conf.js
+
+      - name: Upload Error Screenshots
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: webdriverio-screenshots
+          path: ./allure-results/

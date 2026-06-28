@@ -21,25 +21,25 @@
 // exports.config = config;
 
 
-// 🛠️ IMPORTANTE: Importa a configuração base que você me enviou
+// Importa a configuração base compartilhada
 const { config } = require('./wdio.shared.conf.js');
 const path = require('path');
 
 // Identifica se o teste está rodando dentro do GitHub Actions
 const IS_CI = process.env.CI === 'true';
 
-// Sobrescreve as portas e rotas base para bater com o Appium global do CI ou local
+// Sobrescreve as portas e rotas base para bater com o Appium
 config.hostname = '127.0.0.1';
 config.port = 4723;
 config.path = '/';
 
-// Define onde estão os seus arquivos de teste (remova ou ajuste se já estiver no shared)
+// Define onde estão os seus arquivos de teste spec
 config.specs = [
-    '../tests/**/*.js' 
+    '../tests/**/*.js'
 ];
 
-// 🛠️ CORREÇÃO DOS SERVIÇOS: 
-// No CI fica vazio [] (porque usamos o appium do terminal). No seu Mac, o WDIO gerencia o Appium sozinho.
+// CORREÇÃO DOS SERVIÇOS:
+// No CI fica vazio [] (usamos o appium do terminal). No local (Mac), o WDIO gerencia o ciclo do Appium.
 config.services = IS_CI
   ? [] 
   : [['appium', {
@@ -50,32 +50,32 @@ config.services = IS_CI
       }
     }]];
 
-// Define as capacidades do Android
+// Define as capacidades específicas do Android
 config.capabilities = [{
     platformName: 'Android',
     'appium:automationName': 'UiAutomator2',
     'appium:deviceName': 'Android Emulator',
 
-    // Identificadores do app que foi pré-instalado via ADB no CI
+    // Identificadores do pacote do aplicativo mapeado pelo ADB no CI
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
 
     'appium:noReset': true,
     'appium:newCommandTimeout': 240,
 
-    // Timeouts de estabilidade para o ambiente lento do emulador no CI
+    // Timeouts de estabilidade para lidar com o emulador em servidores de nuvem
     'appium:uiautomator2ServerInstallTimeout': 90000,
     'appium:uiautomator2ServerLaunchTimeout': 90000,
     'appium:adbExecTimeout': 120000,
 
-    // 🛠️ CONFIGURAÇÃO LOCAL (Seu Mac): Se não for CI, ele usa o APK local e limpa o app ao rodar
+    // CONFIGURAÇÃO LOCAL: Se rodar localmente, aponta para o binário físico e limpa o app a cada run
     ...(!IS_CI && {
       'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'),
       'appium:noReset': false
     })
 }];
 
-// Aumenta o timeout do Mocha especificamente para o Android (emuladores demoram mais para interagir)
+// Eleva o timeout do framework Mocha especificamente para a execução móvel
 config.mochaOpts = {
     ...config.mochaOpts,
     timeout: 120000
