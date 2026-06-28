@@ -17,7 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 18
+          # 20.x atende perfeitamente os novos requisitos do Appium 3+
+          node-version: 20
           cache: 'npm'
 
       - name: Install Dependencies
@@ -25,13 +26,11 @@ jobs:
 
       - name: Install Appium & Drivers Globals (CI)
         run: |
-          # 🛠️ Correção: Força a instalação da versão mais recente do Appium para bater com o driver
           npm install -g appium@latest
           appium driver install uiautomator2
 
       - name: Run Appium Server in Background
         run: |
-          # 🛠️ Correção: Removeu flag inválida e adicionou permissão para CORS se necessário
           appium --log-timestamp --allow-cors &
 
       - name: Enable KVM Acceleration
