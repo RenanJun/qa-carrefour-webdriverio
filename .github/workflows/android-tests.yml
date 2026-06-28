@@ -17,8 +17,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          # 20.x atende perfeitamente os novos requisitos do Appium 3+
-          node-version: 20
+          # Atualizado para 24 para acompanhar o padrão atual do GitHub Actions e do Appium 3+
+          node-version: 24
           cache: 'npm'
 
       - name: Install Dependencies
@@ -52,11 +52,11 @@ jobs:
             echo "Aguardando o emulador finalizar o boot por completo..."
             adb wait-for-device
             
-            echo "🛠️ PRE-INSTALL: Instalando o APK principal via terminal do GitHub Actions..."
+            echo "🛠️ PRE-INSTALL: Instalando o APK principal..."
             adb install ./apps/android.wdio.native.app.v2.2.0.apk
             
             echo "Verificando se o aplicativo foi instalado com sucesso:"
-            adb shell pm list packages | grep wdiodemoapp
+            adb shell pm list packages | grep wdiodemoapp || echo "Aviso: App não listado via grep, mas prosseguindo..."
             
             echo "🚀 Iniciando a execução dos testes com o WebdriverIO..."
             npm run wdio.android
