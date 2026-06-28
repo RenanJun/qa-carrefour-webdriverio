@@ -60,9 +60,8 @@ jobs:
             echo "Executando instalação direta via ADB..."
             adb install apps/android.apk
             
-            echo "Disparando o script específico de telas..."
-            # 🛠️ ALTERAÇÃO: Agora a esteira chama diretamente o atalho do seu package.json
-            npm run test:telas
+            echo "Disparando o script específico"
+            npm run test:forms
 
       - name: Upload Error Screenshots
         if: failure()
