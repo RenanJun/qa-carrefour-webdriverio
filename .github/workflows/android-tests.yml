@@ -40,7 +40,7 @@ jobs:
             sleep 2
           done
 
-          echo "Appium is ready"
+          echo "Appium ready"
 
       - name: Enable KVM (optional)
         run: |
@@ -52,6 +52,7 @@ jobs:
           api-level: 29
           arch: x86_64
           profile: Nexus 6
+
           emulator-options: >
             -no-window
             -gpu off
@@ -62,7 +63,7 @@ jobs:
 
           script: |
 
-            echo "===== WAIT DEVICE ====="
+            echo "Waiting emulator..."
 
             adb wait-for-device
 
@@ -79,37 +80,35 @@ jobs:
               sleep 2
             done
 
-            echo "===== DEVICE READY ====="
+            echo "Device ready"
             adb devices
 
-            echo "===== DOWNLOAD APK ====="
+            echo "Downloading APK..."
 
             mkdir -p apps
 
             curl -L -o apps/app.apk \
               https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
 
-            echo "===== INSTALL APK ====="
+            echo "Installing APK..."
 
             adb install -r apps/app.apk
 
             adb shell pm list packages | grep wdiodemoapp || true
 
-            echo "===== RUN TESTS ====="
+            echo "Running tests..."
 
             npm run test:android
 
       - name: Upload Appium Log
         if: always()
-        run: |
-          cat appium.log || true
+        run: cat appium.log || true
 
-      - name: Upload Logcat (debug)
+      - name: Upload Logcat
         if: always()
-        run: |
-          adb logcat -d | tail -300 || true
+        run: adb logcat -d | tail -300 || true
 
-      - name: Upload Test Artifacts
+      - name: Upload Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
