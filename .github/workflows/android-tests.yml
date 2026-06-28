@@ -25,27 +25,7 @@ jobs:
       - name: Install Dependencies
         run: npm ci
 
-      - name: Install Appium
-        run: |
-          npm install -g appium
-          appium driver install uiautomator2
-
-      - name: Start Appium Server
-        run: |
-          appium --address 127.0.0.1 --port 4723 --log appium.log --log-timestamp &
-          sleep 10
-
-          echo "Waiting Appium..."
-          until curl -s http://127.0.0.1:4723/status >/dev/null; do
-            sleep 2
-          done
-
-          echo "Appium ready"
-
-      - name: Enable KVM (optional)
-        run: |
-          sudo chown $USER /dev/kvm || true
-
+      # 🔥 EMULATOR FIRST
       - name: Run Android Emulator + Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -62,44 +42,54 @@ jobs:
             -no-snapshot
 
           script: |
-            bash -c '
-              echo "Waiting emulator..."
 
-              adb wait-for-device
+            echo "Waiting emulator..."
 
-              echo "Waiting Android boot..."
+            adb wait-for-device
 
-              while true; do
-                BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")
+            echo "Waiting Android boot..."
 
-                if [ "$BOOT" = "1" ]; then
-                  echo "Android boot completed"
-                  break
-                fi
+            for i in $(seq 1 60); do
+              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
 
-                sleep 2
-              done
+              if [ "$BOOT" = "1" ]; then
+                echo "Android boot completed"
+                break
+              fi
 
-              echo "Device ready"
-              adb devices
+              sleep 2
+            done
 
-              echo "Downloading APK..."
+            echo "Installing Appium..."
 
-              mkdir -p apps
+            npm install -g appium
+            appium driver install uiautomator2
 
-              curl -L -o apps/app.apk \
-                https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+            echo "Starting Appium..."
 
-              echo "Installing APK..."
+            appium --address 127.0.0.1 --port 4723 --log appium.log --log-timestamp &
+            sleep 10
 
-              adb install -r apps/app.apk
+            echo "Waiting Appium..."
+            until curl -s http://127.0.0.1:4723/status >/dev/null; do
+              sleep 2
+            done
 
-              adb shell pm list packages | grep wdiodemoapp || true
+            echo "Downloading APK..."
 
-              echo "Running tests..."
+            mkdir -p apps
 
-              npm run test:android
-            '
+            curl -L -o apps/app.apk https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+
+            echo "Installing APK..."
+
+            adb install -r apps/app.apk
+
+            adb shell pm list packages | grep wdiodemoapp || true
+
+            echo "Running tests..."
+
+            npm run test:android
 
       - name: Upload Appium Log
         if: always()

@@ -38,16 +38,17 @@ const { expect } = require('chai');
 
 exports.config = {
     runner: 'local',
-    exclude: [],
+
     maxInstances: 1,
 
     logLevel: process.env.CI ? 'warn' : 'info',
 
     bail: 0,
+
     baseUrl: '',
 
     waitforTimeout: 25000,
-    connectionRetryTimeout: 90000,
+    connectionRetryTimeout: 120000,
     connectionRetryCount: 3,
 
     framework: 'mocha',
@@ -70,7 +71,7 @@ exports.config = {
         global.expect = expect;
     },
 
-    afterTest: async function(test, context, { error, passed }) {
+    afterTest: async function (test, context, { passed }) {
         if (!passed) {
             await browser.saveScreenshot(`./allure-results/error-${Date.now()}.png`);
         }
