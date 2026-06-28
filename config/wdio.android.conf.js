@@ -21,57 +21,43 @@
 // exports.config = config;
 
 
-const { config } = require('./wdio.shared.conf.js');
 const path = require('path');
 
 const IS_CI = process.env.CI === 'true';
 
-config.hostname = '127.0.0.1';
-config.port = 4723;
-config.path = '/';
+exports.config = {
+  runner: 'local',
 
-// 🔥 IMPORTANTE: não bloquear execução com spec global
-config.specs = []; // permite usar --spec no CLI
+  hostname: '127.0.0.1',
+  port: 4723,
+  path: '/',
 
-config.capabilities = [{
-    'appium:platformName': 'Android',
-    'appium:deviceName': 'emulator-5554',
+  maxInstances: 1,
+
+  services: IS_CI
+    ? [['appium', {
+        command: 'appium',
+        args: {
+          address: '127.0.0.1',
+          port: 4723,
+          logLevel: 'error'
+        }
+      }]]
+    : [],
+
+  capabilities: [{
+    platformName: 'Android',
     'appium:automationName': 'UiAutomator2',
+    'appium:deviceName': 'Android Emulator',
 
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
 
-    'appium:uiautomator2ServerInstallTimeout': 90000,
-    'appium:uiautomator2ServerLaunchTimeout': 90000,
-    'appium:adbExecTimeout': 120000,
-
-    'appium:ensureWebviewsHavePages': true,
-    'appium:nativeWebScreenshot': true,
-    'appium:newCommandTimeout': 240,
-
     'appium:noReset': true,
+    'appium:newCommandTimeout': 240
+  }],
 
-    ...(IS_CI ? {} : {
-        'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'),
-        'appium:udid': 'emulator-5554',
-        'appium:avd': 'Pixel_10_Pro',
-        'appium:avdArgs': '-no-audio'
-    })
-}];
-
-if (IS_CI) {
-    config.services = ['appium']; // 🔥 evita race condition
-} else {
-    config.services = [
-        ['appium', {
-            args: {
-                address: '127.0.0.1',
-                port: 4723,
-                basePath: '/'
-            },
-            command: 'appium'
-        }]
-    ];
-}
-
-exports.config = config;
+  mochaOpts: {
+    timeout: 120000
+  }
+};
