@@ -32,8 +32,10 @@ config.path = '/';
 
 config.capabilities = [{
     'appium:platformName': 'Android',
-    'appium:deviceName': 'emulator-5554',
     'appium:automationName': 'UiAutomator2',
+
+    'appium:deviceName': 'Android Emulator',
+    'appium:udid': 'emulator-5554',
 
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
@@ -49,27 +51,19 @@ config.capabilities = [{
     'appium:noReset': IS_CI ? true : false,
 
     ...(IS_CI ? {} : {
-        'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'),
-        'appium:udid': 'emulator-5554',
-        'appium:avd': 'Pixel_10_Pro',
-        'appium:avdArgs': '-no-audio'
+        'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk')
     })
 }];
 
-if (IS_CI) {
-    config.services = []; // mantém manual (ok, mas menos recomendado)
-} else {
-    config.services = [
-        ['appium', {
-            args: {
-                address: '127.0.0.1',
-                port: 4723,
-                basePath: '/'
-            },
-            command: 'appium'
-        }]
-    ];
-}
+config.services = [
+    ['appium', {
+        args: {
+            address: '127.0.0.1',
+            port: 4723,
+            basePath: '/'
+        }
+    }]
+];
 
 config.specs = ['../tests/**/*.js'];
 
