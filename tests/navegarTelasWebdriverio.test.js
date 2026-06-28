@@ -38,25 +38,20 @@ describe('Suíte de Testes - Login com Sucesso Isolado', () => {
     //     }
     // });
 
-    // Define qual posição do JSON você quer testar (Ex: 3 equivale ao Forms)
     const posicaoFixa = 6; 
     const menuEspecifico = menuData.menus[posicaoFixa];
 
     it(`Deve ser capaz de selecionar e clicar no menu da posição ${posicaoFixa}: ${menuEspecifico.nome}`, async () => {
-        await MenuPage.navegarParaMenu(); // Garante que o menu lateral está aberto
+        await MenuPage.navegarParaMenu(); 
 
         console.log(`🎯 Testando clique no menu específico: ${menuEspecifico.nome} (ID: ${menuEspecifico.id})`);
 
-        // Busca o elemento usando a estratégia do accessibility id (~) combinada com o ID do JSON
         const itemMenu = await $(`~${menuEspecifico.id}`);
         await itemMenu.waitForDisplayed({ timeout: 5000 });
         
-        // Verifica se está visível antes de clicar
         expect(await itemMenu.isDisplayed()).to.be.true;
         await itemMenu.click();
-        
-        // Validação genérica (opcional): Verifica se o título da nova tela está visível
-        // Como cada tela tem um título diferente, você pode validar se o elemento do título carregou
+
         const tituloTela = await $(`//android.widget.TextView[@text="${menuEspecifico.nome}"]`);
         await tituloTela.waitForDisplayed({ timeout: 5000 });
         expect(await tituloTela.isDisplayed()).to.be.true;

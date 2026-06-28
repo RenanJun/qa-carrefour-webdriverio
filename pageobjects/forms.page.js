@@ -1,7 +1,5 @@
 class FormsPage {
-    // ==========================================
-    // 🔍 SELETORES
-    // ==========================================
+
     get inputField() { return $('~text-input'); }
     get inputTextResult() { return $('~input-text-result'); }
     get switchButton() { return $('~switch'); }
@@ -10,13 +8,10 @@ class FormsPage {
     get botaoActive() { return $('~button-Active'); }
     get botaoInactive() { return $('~button-Inactive'); }
     get alertTitle() { return $('id=com.wdiodemoapp:id/alert_title'); }
-    // 🛠️ CORREÇÃO: Garante o mapeamento correto do elemento de mensagem para evitar o 'undefined'
+
     get alertMessage() { return $('//android.widget.TextView[@resource-id="android:id/message"]'); }
     get alertOkButton() { return $('id=android:id/button1'); }
 
-    // ==========================================
-    // 🎭 AÇÕES
-    // ==========================================
     async navegarParaForms() {
         const itemMenuForms = await $('~Forms');
         await itemMenuForms.click();
@@ -55,10 +50,8 @@ async clicarBotaoActive() {
         
         await botaoNativo.click();
 
-        // 🔥 ADICIONE ESTA LINHA: Aguarda a animação do Android terminar
         await driver.pause(500); 
 
-        // Agora o Appium já vai achar o elemento de primeira, limpando o log!
         await this.alertTitle.waitForDisplayed({ timeout: 5000 });
 
         const txtTitle = await this.alertTitle.getText();

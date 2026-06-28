@@ -7,6 +7,11 @@
   "scripts": {
     "clean:allure": "rimraf allure-results",
     "test:android": "wdio run ./config/wdio.android.conf.js",
+    "test:telas": "wdio run ./config/wdio.android.conf.js --spec ./tests/navegarTelasWebdriverio.test.js",
+    "test:logar": "wdio run ./config/wdio.android.conf.js --spec ./tests/logarWebdriverio.test.js",
+    "test:forms": "wdio run ./config/wdio.android.conf.js --spec ./tests/formsWebdriverio.test.js",
+    "test:sign": "wdio run ./config/wdio.android.conf.js --spec ./tests/signUpWebdriverio.test.js",
+    "test:swipe": "wdio run ./config/wdio.android.conf.js --spec ./tests/swipeWebdriverio.test.js",
     "report:generate": "allure generate allure-results --clean -o allure-report",
     "report:open": "allure open allure-report"
   },
