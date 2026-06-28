@@ -62,43 +62,44 @@ jobs:
             -no-snapshot
 
           script: |
+            bash -c '
+              echo "Waiting emulator..."
 
-            echo "Waiting emulator..."
+              adb wait-for-device
 
-            adb wait-for-device
+              echo "Waiting Android boot..."
 
-            echo "Waiting Android boot..."
+              while true; do
+                BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")
 
-            while true; do
-              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+                if [ "$BOOT" = "1" ]; then
+                  echo "Android boot completed"
+                  break
+                fi
 
-              if [ "$BOOT" = "1" ]; then
-                echo "Android boot completed"
-                break
-              fi
+                sleep 2
+              done
 
-              sleep 2
-            done
+              echo "Device ready"
+              adb devices
 
-            echo "Device ready"
-            adb devices
+              echo "Downloading APK..."
 
-            echo "Downloading APK..."
+              mkdir -p apps
 
-            mkdir -p apps
+              curl -L -o apps/app.apk \
+                https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
 
-            curl -L -o apps/app.apk \
-              https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+              echo "Installing APK..."
 
-            echo "Installing APK..."
+              adb install -r apps/app.apk
 
-            adb install -r apps/app.apk
+              adb shell pm list packages | grep wdiodemoapp || true
 
-            adb shell pm list packages | grep wdiodemoapp || true
+              echo "Running tests..."
 
-            echo "Running tests..."
-
-            npm run test:android
+              npm run test:android
+            '
 
       - name: Upload Appium Log
         if: always()

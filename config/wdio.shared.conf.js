@@ -1,16 +1,57 @@
+// const { expect } = require('chai');
+
+// exports.config = {
+//     runner: 'local',
+//     exclude: [],
+//     maxInstances: 1,
+//     logLevel: 'info',
+//     bail: 0,
+//     baseUrl: '',
+//     waitforTimeout: 12000,
+//     connectionRetryTimeout: 90000,
+//     connectionRetryCount: 3,
+//     framework: 'mocha',
+//     reporters: [
+//         'spec',
+//         ['allure', {
+//             outputDir: 'allure-results',
+//             disableWebdriverStepsReporting: true,
+//             disableWebdriverScreenshotsReporting: false,
+//         }]
+//     ],
+//     mochaOpts: {
+//         ui: 'bdd',
+//         timeout: 60000
+//     },
+//     before: function () {
+//         global.expect = expect;
+//     },
+//     afterTest: async function(test, context, { error, duration, passed, id }) {
+//         if (!passed) {
+//             await browser.takeScreenshot();
+//         }
+//     }
+// };
+
+
 const { expect } = require('chai');
 
 exports.config = {
     runner: 'local',
     exclude: [],
     maxInstances: 1,
-    logLevel: 'info',
+
+    logLevel: process.env.CI ? 'warn' : 'info',
+
     bail: 0,
     baseUrl: '',
-    waitforTimeout: 12000,
+
+    waitforTimeout: 25000,
     connectionRetryTimeout: 90000,
     connectionRetryCount: 3,
+
     framework: 'mocha',
+
     reporters: [
         'spec',
         ['allure', {
@@ -19,16 +60,19 @@ exports.config = {
             disableWebdriverScreenshotsReporting: false,
         }]
     ],
+
     mochaOpts: {
         ui: 'bdd',
         timeout: 60000
     },
+
     before: function () {
         global.expect = expect;
     },
-    afterTest: async function(test, context, { error, duration, passed, id }) {
+
+    afterTest: async function(test, context, { error, passed }) {
         if (!passed) {
-            await browser.takeScreenshot();
+            await browser.saveScreenshot(`./allure-results/error-${Date.now()}.png`);
         }
     }
 };
