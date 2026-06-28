@@ -3,6 +3,7 @@ name: Android UI Tests
 on:
   push:
     branches: [main, master]
+
   pull_request:
     branches: [main, master]
 
@@ -12,16 +13,16 @@ jobs:
     timeout-minutes: 40
 
     steps:
-      - name: Checkout
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node
+      - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      - name: Install dependencies
+      - name: Install Dependencies
         run: npm ci
 
       - name: Install Appium
@@ -29,52 +30,91 @@ jobs:
           npm install -g appium
           appium driver install uiautomator2
 
-      - name: Start Appium
+      - name: Start Appium Server
         run: |
           appium --address 127.0.0.1 --port 4723 --log appium.log --log-timestamp &
           sleep 10
 
-          until curl -s http://127.0.0.1:4723/status; do
-            echo "Waiting Appium..."
+          echo "Waiting Appium..."
+          until curl -s http://127.0.0.1:4723/status >/dev/null; do
             sleep 2
           done
 
-      - name: Run Emulator + Tests
+          echo "Appium is ready"
+
+      - name: Enable KVM (optional)
+        run: |
+          sudo chown $USER /dev/kvm || true
+
+      - name: Run Android Emulator + Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           arch: x86_64
           profile: Nexus 6
-          emulator-options: -no-window -gpu off -no-audio -no-boot-anim
+          emulator-options: >
+            -no-window
+            -gpu off
+            -no-audio
+            -no-boot-anim
+            -camera-back none
+            -no-snapshot
 
           script: |
-            echo "Waiting emulator..."
+
+            echo "===== WAIT DEVICE ====="
 
             adb wait-for-device
 
-            until [ "$(adb shell getprop sys.boot_completed | tr -d '\r')" = "1" ]; do
+            echo "Waiting Android boot..."
+
+            while true; do
+              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+
+              if [ "$BOOT" = "1" ]; then
+                echo "Android boot completed"
+                break
+              fi
+
               sleep 2
             done
 
+            echo "===== DEVICE READY ====="
             adb devices
 
-            echo "Downloading APK..."
+            echo "===== DOWNLOAD APK ====="
+
             mkdir -p apps
 
-            curl -L -o apps/app.apk https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+            curl -L -o apps/app.apk \
+              https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
 
-            echo "Installing APK..."
+            echo "===== INSTALL APK ====="
+
             adb install -r apps/app.apk
 
             adb shell pm list packages | grep wdiodemoapp || true
 
-            echo "Running tests..."
+            echo "===== RUN TESTS ====="
+
             npm run test:android
 
-      - name: Appium Log
+      - name: Upload Appium Log
         if: always()
-        run: cat appium.log || true
+        run: |
+          cat appium.log || true
 
-      - name: Logcat
+      - name: Upload Logcat (debug)
         if: always()
-        run: adb logcat -d | tail -200 || true
+        run: |
+          adb logcat -d | tail -300 || true
+
+      - name: Upload Test Artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-artifacts
+          path: |
+            allure-results
+            test-results
+            appium.log
