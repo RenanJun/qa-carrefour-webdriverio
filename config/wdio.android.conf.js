@@ -32,38 +32,33 @@ config.capabilities = [{
     'appium:deviceName': 'Android Emulator', 
     'appium:automationName': 'UiAutomator2',
     
-    // 🛠️ TIMEOUTS EXPANDIDOS PARA O AMBIENTE SEM ACELERAÇÃO DE HARDWARE (CI)
-    // Dá 90 segundos para o Appium instalar o servidor interno (UiAutomator2 Server)
-    'appium:uiautomator2ServerInstallTimeout': 90000, 
-    // Dá 90 segundos para os serviços internos do UiAutomator2 iniciarem no Android
-    'appium:uiautomator2ServerLaunchTimeout': 90000, 
-    // Aumenta o tempo limite de instalação do SEU aplicativo principal para 3 minutos
-    'appium:androidInstallTimeout': 180000, 
-    // Aumenta o tempo genérico de resposta e execução do ADB para 2 minutos
-    'appium:adbExecTimeout': 120000,       
-
-    // Caminho dinâmico e relativo para o APK do seu projeto
-    'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'), 
+    // Como o app já vai ser instalado via terminal no CI, passamos apenas o Package e Activity
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
+    
+    // Mantemos os timeouts longos apenas para o servidor interno do UiAutomator2 ligar com calma
+    'appium:uiautomator2ServerInstallTimeout': 90000, 
+    'appium:uiautomator2ServerLaunchTimeout': 90000, 
+    'appium:adbExecTimeout': 120000,       
     
     'appium:ensureWebviewsHavePages': true,
     'appium:nativeWebScreenshot': true,
     'appium:newCommandTimeout': 240,
-    'appium:noReset': false,
+    'appium:noReset': true, // Evita que o Appium limpe ou desinstale o app colocado manualmente
 
-    // 🛠️ PARÂMETROS LOCAIS: Só serão aplicados no seu Mac (o GitHub Actions ignora)
-    ...(!IS_CI && {
+    // 🛠️ PARÂMETROS LOCAIS: No seu Mac ele ainda usa o APK local e limpa o app normalmente
+    ...(IS_CI ? {} : {
+        'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'),
         'appium:udid': 'emulator-5554',
         'appium:avd': 'Pixel_10_Pro', 
-        'appium:avdArgs': '-no-audio'
+        'appium:avdArgs': '-no-audio',
+        'appium:noReset': false
     })
 }];
 
 // 🛠️ CONFIGURAÇÃO DE SERVIÇOS DO APPIUM
-// No seu Mac local, o WDIO sobe o Appium automaticamente. Na pipeline, usamos o Appium global de background.
 if (IS_CI) {
-    config.services = []; // Desativa o gerenciamento automático para evitar o erro ENOENT
+    config.services = []; // Desativa o gerenciamento automático para evitar o erro ENOENT no CI
     config.port = 4723;
     config.path = '/';
 } else {

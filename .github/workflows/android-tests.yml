@@ -1,11 +1,10 @@
-name: Android Mobile UI Tests
+name: Android UI Tests
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ main, master ]
   pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
+    branches: [ main, master ]
 
 jobs:
   android-tests:
@@ -18,50 +17,45 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: 18
           cache: 'npm'
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Setup Java JDK
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
-
-      # Instala o Appium v3 (Next) para casar perfeitamente com o driver
-      - name: Install Appium and Android Driver
+      - name: Install Appium & Drivers Globals (CI)
         run: |
-          npm install -g appium@next
+          npm install -g appium
           appium driver install uiautomator2
 
-      - name: Download APK for Testing
-        run: |
-          mkdir -p apps
-          curl -L -o apps/android.wdio.native.app.v2.2.0.apk https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+      - name: Run Appium Server in Background
+        run: appium --log-timestamp --plugins-importio2 &
 
-      - name: Run Appium Tests inside Android Emulator
+      - name: Enable KVM Acceleration
+        run: |
+          echo "Garantindo permissões para aceleração de emulador se disponível..."
+          //this-is-just-a-placeholder-for-safety-check
+          sudo chown $USER /dev/kvm || true
+
+      - name: Run Android Emulator and Execute App Installation
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           target: default
-          arch: x86
+          arch: x86_64
+          profile: Nexus 6
           force-avd-creation: false
-          emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot -camera-back none
-          disable-animations: true
+          emulator-options: -no-window -gpu off -no-audio -no-boot-anim -camera-back none
+          disable-spellchecker: true
           script: |
-            # Inicializa o Appium com suporte a CORS em background
-            appium --allow-cors &
-            sleep 5
+            echo "Aguardando o emulador finalizar o boot por completo..."
+            adb wait-for-device
             
-            # Roda os testes usando a inteligência do package.json e wdio.android.conf.js
-            npm run test:telas
-
-      - name: Upload Allure Report Artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: allure-results
-          path: allure-results/
-          retention-days: 10
+            echo "🛠️ PRE-INSTALL: Instalando o APK principal via terminal do GitHub Actions..."
+            adb install ./apps/android.wdio.native.app.v2.2.0.apk
+            
+            echo "Verificando se o aplicativo foi instalado com sucesso:"
+            adb shell pm list packages | grep wdiodemoapp
+            
+            echo "🚀 Iniciando a execução dos testes com o WebdriverIO..."
+            npm run wdio.android
