@@ -2,9 +2,14 @@ name: Android UI Tests
 
 on:
   push:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
+
   pull_request:
-    branches: [ main, master ]
+    branches:
+      - main
+      - master
 
 jobs:
   android-tests:
@@ -18,51 +23,88 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: 'npm'
+          cache: npm
 
       - name: Install Dependencies
         run: npm ci
 
-      - name: Install Appium & Drivers Globals (CI)
+      - name: Install Appium
         run: |
           npm install -g appium@latest
           appium driver install uiautomator2
 
-      - name: Run Appium Server in Background
+      - name: Start Appium
         run: |
-          appium --log-timestamp --allow-cors &
+          appium --log appium.log --log-timestamp --allow-cors &
+          sleep 10
 
-      - name: Enable KVM Acceleration
+      - name: Enable KVM
         run: |
-          echo "Garantindo permissões para aceleração de emulador se disponível..."
           sudo chown $USER /dev/kvm || true
 
-      - name: Run Android Emulator and Execute App Installation
+      - name: Run Emulator and Execute Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           target: default
           arch: x86_64
           profile: Nexus 6
-          force-avd-creation: false
           emulator-options: -no-window -gpu off -no-audio -no-boot-anim -camera-back none
           disable-spellchecker: true
+
           script: |
-            echo "Aguardando o emulador finalizar o boot por completo..."
+            echo "=============================="
+            echo "Aguardando emulator..."
+            echo "=============================="
+
             adb wait-for-device
-            
-            echo "🔎 INVESTIGAÇÃO: Listando a raiz do repositório para achar os arquivos..."
-            ls -la "$GITHUB_WORKSPACE"
-            
-            echo "🛠️ Baixando/Garantindo o APK direto na máquina virtual para evitar falhas no Git..."
-            mkdir -p "$GITHUB_WORKSPACE/apps"
-            curl -L -o "$GITHUB_WORKSPACE/apps/android.wdio.native.app.v2.2.0.apk" https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
-            
-            echo "🛠️ PRE-INSTALL: Instalando o APK recém-obtido..."
-            adb install "$GITHUB_WORKSPACE/apps/android.wdio.native.app.v2.2.0.apk"
-            
-            echo "Verificando se o aplicativo foi instalado com sucesso:"
-            adb shell pm list packages | grep wdiodemoapp || echo "Aviso: App não listado via grep..."
-            
-            echo "🚀 Iniciando a execução dos testes com o WebdriverIO..."
-            npm run wdio.android
+
+            until [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" == "1" ]]; do
+              sleep 2
+            done
+
+            echo "=============================="
+            echo "Criando pasta apps"
+            echo "=============================="
+
+            mkdir -p apps
+
+            echo "=============================="
+            echo "Baixando APK"
+            echo "=============================="
+
+            curl -L \
+              -o apps/android.wdio.native.app.v2.2.0.apk \
+              https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+
+            echo "=============================="
+            echo "Instalando APK"
+            echo "=============================="
+
+            adb install -r apps/android.wdio.native.app.v2.2.0.apk
+
+            echo "=============================="
+            echo "Pacotes instalados"
+            echo "=============================="
+
+            adb shell pm list packages | grep wdiodemoapp
+
+            echo "=============================="
+            echo "Executando testes"
+            echo "=============================="
+
+            npm run test:android
+
+      - name: Upload Allure Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results
+
+      - name: Upload Appium Log
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: appium-log
+          path: appium.log
