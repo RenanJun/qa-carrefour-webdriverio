@@ -1,0 +1,12 @@
+{
+  "textoInput": "teste",
+  "textoSwitchOn": "Click to turn the switch ON",
+  "textoSwitchOff": "Click to turn the switch OFF",
+  "opcoesDropdown": [
+    "Select an item...",
+    "webdriver.io is awesome",
+    "Appium is awesome",
+    "This app is awesome"
+  ],
+  "alertaEsperado": "This button is active"
+}

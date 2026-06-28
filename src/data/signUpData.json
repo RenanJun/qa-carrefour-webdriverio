@@ -1,0 +1,38 @@
+[
+  {
+    "scenario": "Sucesso",
+    "email": "renan.test@example.com",
+    "password": "Password123!",
+    "confirmPassword": "Password123!"
+  },
+  {
+    "scenario": "Email Invalido",
+    "email": "renan.invalid",
+    "password": "Password123!",
+    "confirmPassword": "Password123!"
+  },
+  {
+    "scenario": "Sem dados",
+    "email": "",
+    "password": "",
+    "confirmPassword": ""
+  },
+  {
+    "scenario": "Senha Curta",
+    "email": "renan.test@example.com",
+    "password": "123",
+    "confirmPassword": "123"
+  },
+  {
+    "scenario": "Sem Email",
+    "email": "",
+    "password": "Password123!",
+    "confirmPassword": "Password123!"
+  },
+  {
+    "scenario": "Sem Senha",
+    "email": "renan.test@example.com",
+    "password": "",
+    "confirmPassword": "Password123!"
+  }
+]

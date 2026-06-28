@@ -1,0 +1,36 @@
+{
+  "menus": [
+    {
+      "id": "side-menu-item-home",
+      "nome": "Home"
+    },
+    {
+      "id": "side-menu-item-webview",
+      "nome": "Webview"
+    },
+    {
+      "id": "side-menu-item-login",
+      "nome": "Login"
+    },
+    {
+      "id": "side-menu-item-forms",
+      "nome": "Forms"
+    },
+    {
+      "id": "side-menu-item-swipe",
+      "nome": "Swipe"
+    },
+    {
+      "id": "side-menu-item-drag",
+      "nome": "Drag"
+    },
+    {
+      "id": "side-menu-item-permissions",
+      "nome": "Permissions"
+    },
+    {
+      "id": "side-menu-item-data-management",
+      "nome": "Data Management"
+    }
+  ]
+}

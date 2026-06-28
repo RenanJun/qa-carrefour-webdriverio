@@ -1,0 +1,64 @@
+name: Android Mobile UI Tests
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+  workflow_dispatch: # Permite rodar os testes manualmente pelo painel do GitHub
+
+jobs:
+  android-tests:
+    runs-on: macos-13 # Essencial para rodar o emulador Android com aceleração de hardware
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+
+      - name: Install Dependencies
+        run: npm ci
+
+      - name: Setup Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '11'
+
+      # 🛠️ PASSO ADICIONADO: Baixa o APK direto da nuvem para a pipeline sem pesar o seu Git
+      - name: Download APK for Testing
+        run: |
+          mkdir -p apps
+          curl -L -o apps/android.wdio.native.app.v2.2.0.apk https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+
+      - name: Run Appium Tests inside Android Emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 31 # Equivale ao Android 12.0 das suas capabilities
+          target: google_apis
+          arch: x86_64
+          force-avd-creation: false
+          emulator-options: -no-window -gpu off -no-audio -no-boot-anim -camera-back none
+          disable-animations: true
+          script: |
+            # Inicializa o servidor do Appium em background
+            npx appium --allow-cors &
+            
+            # Aguarda 5 segundos para o servidor do Appium estabilizar
+            sleep 5
+            
+            # Executa a sua suíte de testes do WebdriverIO
+            npx wdio run ./config/wdio.android.conf.js
+
+      - name: Upload Allure Report Artifacts
+        if: always() # Garante o upload das evidências mesmo se algum teste falhar
+        uses: actions/upload-artifact@v4
+        with:
+          name: allure-results
+          path: allure-results/
+          retention-days: 10
