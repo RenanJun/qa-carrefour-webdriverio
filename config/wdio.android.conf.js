@@ -24,42 +24,54 @@
 const { config } = require('./wdio.shared.conf.js');
 const path = require('path');
 
+// Identifica se o teste está rodando dentro do GitHub Actions
+const IS_CI = process.env.CI === 'true';
+
 config.capabilities = [{
     'appium:platformName': 'Android',
-    'appium:deviceName': 'emulator-5554', 
-    'appium:udid': 'emulator-5554', // Força a conexão direta no canal do emulador ativo
+    'appium:deviceName': 'Android Emulator', 
     'appium:automationName': 'UiAutomator2',
-    
-    // 🚀 AUTO-BOOT: Força o WebDriverIO/Appium a ligar o emulador sozinho caso esteja fechado
-    'appium:avd': 'Pixel_10_Pro', 
-    'appium:avdArgs': '-no-audio',
     
     // Caminho dinâmico e relativo para o APK
     'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'), 
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
     
-    // Proteções de timeout para evitar quedas no ambiente local do Mac
-    'appium:adbExecTimeout': 60000,       // Dá 60 segundos para o ADB responder
-    'appium:androidInstallTimeout': 90000, // Tempo extra para instalar o APK completo
+    // Proteções de timeout essenciais para o Mac local e para a nuvem
+    'appium:adbExecTimeout': 60000,       
+    'appium:androidInstallTimeout': 90000, 
     
     'appium:ensureWebviewsHavePages': true,
     'appium:nativeWebScreenshot': true,
     'appium:newCommandTimeout': 240,
-    'appium:noReset': false
+    'appium:noReset': false,
+
+    // 🛠️ PARÂMETROS LOCAIS (Só serão aplicados no seu Mac, o GitHub Actions ignora)
+    ...(!IS_CI && {
+        'appium:udid': 'emulator-5554',
+        'appium:avd': 'Pixel_10_Pro', 
+        'appium:avdArgs': '-no-audio'
+    })
 }];
 
-// Definição fixa da porta padrão para isolar o processo de portas dinâmicas
-config.services = [
-    ['appium', { 
-        args: {
-            address: '127.0.0.1',
-            port: 4723,
-            basePath: '/'
-        },
-        command: 'appium' 
-    }]
-];
+// 🛠️ CONFIGURAÇÃO DE SERVIÇOS DO APPIUM
+// No seu Mac local, o WDIO sobe o Appium automaticamente. Na pipeline (CI), nós usamos o Appium global de background.
+if (IS_CI) {
+    config.services = []; // Desativa o gerenciamento automático para evitar o erro ENOENT
+    config.port = 4723;
+    config.path = '/';
+} else {
+    config.services = [
+        ['appium', { 
+            args: {
+                address: '127.0.0.1',
+                port: 4723,
+                basePath: '/'
+            },
+            command: 'appium' 
+        }]
+    ];
+}
 
 config.specs = ['../tests/**/*.js'];
 

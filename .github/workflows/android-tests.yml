@@ -30,6 +30,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
+      # 🛠️ NOVO PASSO: Instala o Appium e o driver UiAutomator2 necessários para o teste rodar
+      - name: Install Appium and Android Driver
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
       - name: Download APK for Testing
         run: |
           mkdir -p apps
@@ -38,22 +44,20 @@ jobs:
       - name: Run Appium Tests inside Android Emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          # 🛠️ AJUSTES PARA AMBIENTE LINUX SEM HARDWARE ACELERADO:
-          api-level: 29          # Android 10.0 (O mais estável e rápido para CI gratuito)
-          target: default        # Imagem limpa sem Google Play Services pesando em background
-          arch: x86              # Arquitetura ideal para rodar em containers Linux puros
+          api-level: 29
+          target: default
+          arch: x86
           force-avd-creation: false
-          # Otimizações de performance cruciais para não travar o boot:
           emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot -camera-back none
           disable-animations: true
           script: |
-            # Inicializa o Appium em background
-            npx appium --allow-cors &
+            # Inicializa o Appium usando o pacote global recém-instalado
+            appium --allow-cors &
             sleep 5
             
-            # Roda os testes usando o script do seu package.json
+            # Executa os testes do package.json
             npm run test:telas
-
+            
       - name: Upload Allure Report Artifacts
         if: always()
         uses: actions/upload-artifact@v4
