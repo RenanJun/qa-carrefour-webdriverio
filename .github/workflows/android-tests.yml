@@ -51,14 +51,18 @@ jobs:
             echo "Aguardando o emulador finalizar o boot por completo..."
             adb wait-for-device
             
-            echo "🔎 Verificando arquivos na pasta apps..."
-            ls -la $GITHUB_WORKSPACE/apps/ || echo "Aviso: pasta apps não encontrada na raiz!"
+            echo "🔎 INVESTIGAÇÃO: Listando a raiz do repositório para achar os arquivos..."
+            ls -la "$GITHUB_WORKSPACE"
             
-            echo "🛠️ PRE-INSTALL: Instalando o APK principal usando caminho absoluto..."
+            echo "🛠️ Baixando/Garantindo o APK direto na máquina virtual para evitar falhas no Git..."
+            mkdir -p "$GITHUB_WORKSPACE/apps"
+            curl -L -o "$GITHUB_WORKSPACE/apps/android.wdio.native.app.v2.2.0.apk" https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
+            
+            echo "🛠️ PRE-INSTALL: Instalando o APK recém-obtido..."
             adb install "$GITHUB_WORKSPACE/apps/android.wdio.native.app.v2.2.0.apk"
             
             echo "Verificando se o aplicativo foi instalado com sucesso:"
-            adb shell pm list packages | grep wdiodemoapp || echo "Aviso: App não listado via grep, mas prosseguindo..."
+            adb shell pm list packages | grep wdiodemoapp || echo "Aviso: App não listado via grep..."
             
             echo "🚀 Iniciando a execução dos testes com o WebdriverIO..."
             npm run wdio.android
