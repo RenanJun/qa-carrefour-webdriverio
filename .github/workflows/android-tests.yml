@@ -1,31 +1,47 @@
-name: Android UI Tests
+name: Android UI Tests (PRO)
 
 on:
   push:
     branches: [main, master]
-
   pull_request:
     branches: [main, master]
 
 jobs:
   android-tests:
     runs-on: ubuntu-latest
-    timeout-minutes: 40
+    timeout-minutes: 60
 
     steps:
-      - name: Checkout Repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
-          node-version: 24
+          node-version: 20
           cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      # 🔥 EMULATOR FIRST
+      # 🔥 FIX ADB
+      - name: Reset ADB
+        run: |
+          adb kill-server || true
+          adb start-server
+
+      # 📦 Appium
+      - name: Install Appium
+        run: |
+          npm install -g appium
+          appium driver install uiautomator2
+
+      - name: Start Appium Server
+        run: |
+          appium --address 127.0.0.1 --port 4723 --log appium.log &
+          npx wait-on http://127.0.0.1:4723/status
+
+      # 🚀 EMULATOR
       - name: Run Android Emulator + Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
@@ -35,76 +51,63 @@ jobs:
 
           emulator-options: >
             -no-window
-            -gpu off
+            -gpu swiftshader_indirect
             -no-audio
             -no-boot-anim
-            -camera-back none
             -no-snapshot
+            -no-metrics
+            -camera-back none
 
           script: |
+            set -e
 
-            echo "Waiting emulator..."
-
+            echo "🚀 Waiting emulator..."
             adb wait-for-device
 
-            echo "Waiting Android boot..."
+            echo "⏳ Waiting boot..."
 
-            for i in $(seq 1 60); do
-              BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')
+            bash -lc '
+              for i in $(seq 1 90); do
+                BOOT=$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d "\r")
 
-              if [ "$BOOT" = "1" ]; then
-                echo "Android boot completed"
-                break
-              fi
+                if [ "$BOOT" = "1" ]; then
+                  echo "✅ Boot completed"
+                  exit 0
+                fi
 
-              sleep 2
-            done
+                sleep 2
+              done
 
-            echo "Installing Appium..."
+              echo "❌ Boot timeout"
+              exit 1
+            '
 
-            npm install -g appium
-            appium driver install uiautomator2
+            adb devices
 
-            echo "Starting Appium..."
-
-            appium --address 127.0.0.1 --port 4723 --log appium.log --log-timestamp &
-            sleep 10
-
-            echo "Waiting Appium..."
-            until curl -s http://127.0.0.1:4723/status >/dev/null; do
-              sleep 2
-            done
-
-            echo "Downloading APK..."
-
+            echo "⬇️ Download APK"
             mkdir -p apps
+            curl -L -o apps/app.apk \
+              https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
 
-            curl -L -o apps/app.apk https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
-
-            echo "Installing APK..."
-
+            echo "📦 Install APK"
             adb install -r apps/app.apk
 
-            adb shell pm list packages | grep wdiodemoapp || true
-
-            echo "Running tests..."
-
+            echo "🧪 Running tests"
             npm run test:android
 
-      - name: Upload Appium Log
+      # 📊 Allure results
+      - name: Generate Allure Report
         if: always()
-        run: cat appium.log || true
+        run: |
+          npm run report:generate || true
 
-      - name: Upload Logcat
-        if: always()
-        run: adb logcat -d | tail -300 || true
-
-      - name: Upload Artifacts
+      # 📦 Upload artifacts
+      - name: Upload Test Artifacts
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: test-artifacts
           path: |
             allure-results
-            test-results
+            allure-report
             appium.log
