@@ -32,7 +32,10 @@ config.capabilities = [{
     'appium:deviceName': 'Android Emulator', 
     'appium:automationName': 'UiAutomator2',
     
-    // Caminho dinâmico e relativo para o APK
+    // 🛠️ Garante tempo suficiente para o Appium instalar o servidor interno (UiAutomator2 Server) no ambiente lento do CI
+    'appium:uiautomator2ServerInstallTimeout': 90000, 
+
+    // Caminho dinâmico e relativo para o APK do seu projeto
     'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'), 
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
@@ -46,7 +49,7 @@ config.capabilities = [{
     'appium:newCommandTimeout': 240,
     'appium:noReset': false,
 
-    // 🛠️ PARÂMETROS LOCAIS (Só serão aplicados no seu Mac, o GitHub Actions ignora)
+    // 🛠️ PARÂMETROS LOCAIS: Só serão aplicados no seu Mac (o GitHub Actions ignora)
     ...(!IS_CI && {
         'appium:udid': 'emulator-5554',
         'appium:avd': 'Pixel_10_Pro', 
