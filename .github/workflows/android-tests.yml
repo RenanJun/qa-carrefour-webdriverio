@@ -30,10 +30,10 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
 
-      # 🛠️ NOVO PASSO: Instala o Appium e o driver UiAutomator2 necessários para o teste rodar
+      # Instala o Appium v3 (Next) para casar perfeitamente com o driver
       - name: Install Appium and Android Driver
         run: |
-          npm install -g appium
+          npm install -g appium@next
           appium driver install uiautomator2
 
       - name: Download APK for Testing
@@ -51,13 +51,13 @@ jobs:
           emulator-options: -no-window -gpu swiftshader_indirect -no-audio -no-boot-anim -no-snapshot -camera-back none
           disable-animations: true
           script: |
-            # Inicializa o Appium usando o pacote global recém-instalado
+            # Inicializa o Appium com suporte a CORS em background
             appium --allow-cors &
             sleep 5
             
-            # Executa os testes do package.json
+            # Roda os testes usando a inteligência do package.json e wdio.android.conf.js
             npm run test:telas
-            
+
       - name: Upload Allure Report Artifacts
         if: always()
         uses: actions/upload-artifact@v4
