@@ -1,6 +1,5 @@
 const path = require('path');
 const FormsPage = require('../pageobjects/forms.page.js');
-// 🔥 Importa o arquivo JSON de dados
 const formsData = require(path.join(process.cwd(), './src/data/formsData.json'));
 const { abrirApp, fecharApp } = require('../tests/utils/appLifecycle.js');
 
@@ -43,46 +42,43 @@ describe('Suíte de Testes - Componentes de Formulário com JSON', () => {
 
 it('Deve preencher o formulário selecionando itens da lista do JSON', async () => {
         
-        // 1. Identifica e aguarda o campo de texto carregar na tela
-        const inputTexto = await $('~text-input'); // Ajuste o seletor se necessário
-        await inputTexto.waitForDisplayed({ timeout: 20000 });
+        console.log(`Preenchendo texto com: ${formsData.textoInput}`);
+        await FormsPage.preencherCampoTexto(formsData.textoInput);
         
-        console.log('Preenchendo texto com: teste');
-        await inputTexto.setValue('teste');
+        const textoInputResult = await FormsPage.inputTextResult.getText();
+        expect(textoInputResult).to.equal(formsData.textoInput);
 
-        // 2. Localiza e interage com o Switch
-        const switchComponent = await $('~switch'); // Ajuste o seletor se necessário
-        await switchComponent.waitForDisplayed({ timeout: 15000 });
-        
         console.log('Alternando o estado do Switch...');
-        await switchComponent.click();
+        await FormsPage.alternarSwitch();
+        
+        const textoSwitch = await FormsPage.switchText.getText();
+        expect(textoSwitch).to.equal(formsData.textoSwitchOff);
 
-        // 3. Localiza e interage com o Dropdown
-        const dropdown = await $('~Dropdown'); // Ajuste o seletor se necessário
-        await dropdown.waitForDisplayed({ timeout: 15000 });
-        
-        console.log('Dropdown ➡️ Selecionando: webdriver.io is awesome');
-        await dropdown.click();
-        
-        // Aguarda as opções do dropdown aparecerem antes de clicar na opção desejada
-        const opcaoDropdown = await $('/*[@text="webdriver.io is awesome"]'); // Seletor de exemplo por texto
-        await opcaoDropdown.waitForDisplayed({ timeout: 15000 });
-        await opcaoDropdown.click();
+        console.log(`Dropdown ➡️ Selecionando: ${formsData.opcoesDropdown[1]}`);
+        await FormsPage.selecionarOpcaoDropdown(formsData.opcoesDropdown[1]);
 
         console.log('🔍 Validando visibilidade dos botões...');
-
-        // 🛠️ CORREÇÃO DA LINHA 37: 
-        // Em vez de dar o expect direto, primeiro esperamos o botão alvo estar visível/ativo
-        const botaoAlvo = await $('~button-active'); // Substitua pelo seletor real da sua linha 37
         
-        // Força o WebdriverIO a esperar até 20 segundos até que o elemento esteja visível
-        await botaoAlvo.waitForDisplayed({ 
-            timeout: 20000,
-            message: 'Erro no CI: O botão alvo não ficou visível a tempo devido à lentidão do emulador.'
-        });
+        // 1. Executa a rolagem nativa até o botão alvo estar visível na tela
+        await $(
+            'android=new UiScrollable(new UiSelector().scrollable(true)).scrollIntoView(new UiSelector().text("Active"))'
+        );
 
-        // Agora a asserção do Chai passará com segurança, pois o elemento já existe e está renderizado
-        const estaVisivel = await botaoAlvo.isDisplayed();
-        expect(estaVisivel).to.equal(true);
+        // 2. Aguarda explicitamente os botões carregarem (Garante estabilidade no CI/Emulador)
+        await FormsPage.botaoActive.waitForDisplayed({ 
+            timeout: 20000,
+            message: 'O botão Active não renderizou a tempo.' 
+        });
+        await FormsPage.botaoInactive.waitForDisplayed({ timeout: 15000 });
+
+        // 3. Asserções válidas usando a sintaxe do seu Chai injetado globalmente
+        const isBotaoActiveDisplayed = await FormsPage.botaoActive.isDisplayed();
+        const isBotaoInactiveDisplayed = await FormsPage.botaoInactive.isDisplayed();
+        
+        expect(isBotaoActiveDisplayed).to.be.true;   
+        expect(isBotaoInactiveDisplayed).to.be.true; 
+
+        console.log('Acionando o botão Active e validando o Modal...');
+        await FormsPage.clicarBotaoActive();
     });
 });

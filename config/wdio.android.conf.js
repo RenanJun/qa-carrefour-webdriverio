@@ -55,14 +55,15 @@ config.capabilities = [{
     'appium:noReset': true,
     'appium:newCommandTimeout': 240,
 
-    // Mantém as pontes de comunicação abertas por mais tempo no ambiente do GitHub Actions
     'appium:uiautomator2ServerInstallTimeout': 90000,
     'appium:uiautomator2ServerLaunchTimeout': 90000,
     'appium:adbExecTimeout': 120000,
 
+    // Se não for CI (Execução no seu computador)
     ...(!IS_CI && {
-      'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'),
-      'appium:noReset': false
+        // 🛠️ Alterado para buscar o nome exato do APK original que usamos no projeto
+        'appium:app': path.resolve(process.cwd(), 'apps', 'android.wdio.native.app.v2.2.0.apk'),
+        'appium:noReset': false
     })
 }];
 
