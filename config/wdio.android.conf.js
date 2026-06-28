@@ -32,17 +32,20 @@ config.capabilities = [{
     'appium:deviceName': 'Android Emulator', 
     'appium:automationName': 'UiAutomator2',
     
-    // 🛠️ Garante tempo suficiente para o Appium instalar o servidor interno (UiAutomator2 Server) no ambiente lento do CI
+    // 🛠️ TIMEOUTS EXPANDIDOS PARA O AMBIENTE SEM ACELERAÇÃO DE HARDWARE (CI)
+    // Dá 90 segundos para o Appium instalar o servidor interno (UiAutomator2 Server)
     'appium:uiautomator2ServerInstallTimeout': 90000, 
+    // Dá 90 segundos para os serviços internos do UiAutomator2 iniciarem no Android
+    'appium:uiautomator2ServerLaunchTimeout': 90000, 
+    // Aumenta o tempo limite de instalação do SEU aplicativo principal para 3 minutos
+    'appium:androidInstallTimeout': 180000, 
+    // Aumenta o tempo genérico de resposta e execução do ADB para 2 minutos
+    'appium:adbExecTimeout': 120000,       
 
     // Caminho dinâmico e relativo para o APK do seu projeto
     'appium:app': path.join(process.cwd(), './apps/android.wdio.native.app.v2.2.0.apk'), 
     'appium:appPackage': 'com.wdiodemoapp',
     'appium:appActivity': '.MainActivity',
-    
-    // Proteções de timeout essenciais para o Mac local e para a nuvem
-    'appium:adbExecTimeout': 60000,       
-    'appium:androidInstallTimeout': 90000, 
     
     'appium:ensureWebviewsHavePages': true,
     'appium:nativeWebScreenshot': true,
@@ -58,7 +61,7 @@ config.capabilities = [{
 }];
 
 // 🛠️ CONFIGURAÇÃO DE SERVIÇOS DO APPIUM
-// No seu Mac local, o WDIO sobe o Appium automaticamente. Na pipeline (CI), nós usamos o Appium global de background.
+// No seu Mac local, o WDIO sobe o Appium automaticamente. Na pipeline, usamos o Appium global de background.
 if (IS_CI) {
     config.services = []; // Desativa o gerenciamento automático para evitar o erro ENOENT
     config.port = 4723;
