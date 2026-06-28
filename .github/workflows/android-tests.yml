@@ -2,105 +2,133 @@ name: Android UI Tests
 
 on:
   push:
-    branches:
-      - main
-      - master
+    branches: [main, master]
 
   pull_request:
-    branches:
-      - main
-      - master
+    branches: [main, master]
 
 jobs:
   android-tests:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 24
           cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Install Appium
         run: |
-          npm install -g appium@latest
+          npm install -g appium
           appium driver install uiautomator2
 
       - name: Start Appium
         run: |
-          appium --log appium.log --log-timestamp --allow-cors &
-          sleep 10
+          appium \
+            --address 127.0.0.1 \
+            --port 4723 \
+            --log appium.log \
+            --log-timestamp > appium.log 2>&1 &
+
+          echo "Waiting Appium..."
+
+          timeout 60 bash -c '
+            until curl -s http://127.0.0.1:4723/status > /dev/null
+            do
+              sleep 2
+            done
+          '
+
+          echo "Appium started."
 
       - name: Enable KVM
         run: |
           sudo chown $USER /dev/kvm || true
 
-      - name: Run Emulator and Execute Tests
+      - name: Emulator + Tests
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: 29
           target: default
           arch: x86_64
           profile: Nexus 6
-          emulator-options: -no-window -gpu off -no-audio -no-boot-anim -camera-back none
-          disable-spellchecker: true
+          disable-animations: true
+          force-avd-creation: false
+
+          emulator-options: >
+            -no-window
+            -gpu swiftshader_indirect
+            -no-audio
+            -no-boot-anim
+            -camera-back none
+            -no-snapshot
 
           script: |
-            echo "=============================="
-            echo "Aguardando emulator..."
-            echo "=============================="
+
+            set -x
+
+            echo "===== WAIT DEVICE ====="
 
             adb wait-for-device
 
-            until [[ "$(adb shell getprop sys.boot_completed | tr -d '\r')" == "1" ]]; do
-              sleep 2
-            done
+            timeout 120 bash -c '
+              until [[ "$(adb shell getprop sys.boot_completed | tr -d "\r")" == "1" ]]
+              do
+                sleep 2
+              done
+            '
 
-            echo "=============================="
-            echo "Criando pasta apps"
-            echo "=============================="
+            adb devices
 
             mkdir -p apps
-
-            echo "=============================="
-            echo "Baixando APK"
-            echo "=============================="
 
             curl -L \
               -o apps/android.wdio.native.app.v2.2.0.apk \
               https://github.com/webdriverio/native-demo-app/releases/download/v2.2.0/android.wdio.native.app.v2.2.0.apk
 
-            echo "=============================="
-            echo "Instalando APK"
-            echo "=============================="
-
             adb install -r apps/android.wdio.native.app.v2.2.0.apk
 
-            echo "=============================="
-            echo "Pacotes instalados"
-            echo "=============================="
+            adb shell pm list packages | grep wdiodemoapp || true
 
-            adb shell pm list packages | grep wdiodemoapp
+            ls -la
+            ls -la config
 
-            echo "=============================="
-            echo "Executando testes"
-            echo "=============================="
+            echo "===== START TESTS ====="
 
             npm run test:android
 
-      - name: Upload Allure Results
+      - name: Appium Log
+        if: always()
+        run: |
+          echo "================ APPPIUM LOG ================"
+          cat appium.log || true
+
+      - name: Android Logcat
+        if: always()
+        run: |
+          adb logcat -d | tail -500 || true
+
+      - name: Upload Allure
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: allure-results
           path: allure-results
+
+      - name: Upload Test Results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: test-results
 
       - name: Upload Appium Log
         if: always()
