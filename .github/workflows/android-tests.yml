@@ -25,16 +25,18 @@ jobs:
 
       - name: Install Appium & Drivers Globals (CI)
         run: |
-          npm install -g appium
+          # 🛠️ Correção: Força a instalação da versão mais recente do Appium para bater com o driver
+          npm install -g appium@latest
           appium driver install uiautomator2
 
       - name: Run Appium Server in Background
-        run: appium --log-timestamp --plugins-importio2 &
+        run: |
+          # 🛠️ Correção: Removeu flag inválida e adicionou permissão para CORS se necessário
+          appium --log-timestamp --allow-cors &
 
       - name: Enable KVM Acceleration
         run: |
           echo "Garantindo permissões para aceleração de emulador se disponível..."
-          //this-is-just-a-placeholder-for-safety-check
           sudo chown $USER /dev/kvm || true
 
       - name: Run Android Emulator and Execute App Installation
