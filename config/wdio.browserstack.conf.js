@@ -12,7 +12,7 @@ config.capabilities = [{
     'browserstack.appium_version': '1.22.0',
     'device': 'Google Pixel 7',
     'os_version': '13.0',
-    'app': 'bs://<hashed-app-id>', // ID gerado ao fazer upload do app no BrowserStack
+    'app': 'bs://<hashed-app-id>',
     'project': 'WebDriverIO Demo Native App',
     'build': 'Automated-Build-CI',
     'name': 'Execution_BrowserStack_Parallel'

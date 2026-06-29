@@ -5,7 +5,7 @@ config.capabilities = [{
     'appium:platformName': 'Android',
     'appium:deviceName': 'Android Emulator',
     'appium:automationName': 'UiAutomator2',
-    'appium:app': path.join(process.cwd(), './apps/android-demo-app.apk'), // Coloque o .apk baixado aqui
+    'appium:app': path.join(process.cwd(), './apps/android-demo-app.apk'),
     'appium:appActivity': '.MainActivity',
     'appium:ensureWebviewsHavePages': true,
     'appium:nativeWebScreenshot': true,

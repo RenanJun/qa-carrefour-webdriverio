@@ -116,14 +116,11 @@ async swipeAteOCard(textoDoCard, descricaoDoCard) {
         const container = await this.carrosselContainer;
         await container.waitForExist({ timeout: 10000 });
 
-        // Coleta as dimensões com base no container dinâmico
         const location = await container.getLocation();
         const size = await container.getSize();
 
-        // Linha central vertical estável
         const centerY = Math.round(location.y + (size.height / 2));
 
-        // Coordenadas calibradas estáveis (Direita para Esquerda)
         const startX = Math.round(location.x + (size.width * 0.85));
         const endX = Math.round(location.x + (size.width * 0.15));
 
@@ -133,22 +130,17 @@ async swipeAteOCard(textoDoCard, descricaoDoCard) {
         const maxTentativas = 5;
         let encontrado = false;
 
-        // 🔥 FCO TOTAL AQUI: Se o card escolhido for o primeiro, não faz o swipe e vai direto pro clique
         if (textoDoCard === 'FULLY OPEN SOURCE') {
             console.log(`✨ [SwipePage] O card escolhido é o primeiro ("FULLY OPEN SOURCE"). Ignorando o carrossel.`);
             encontrado = true; 
         }
 
-        // SEU CÓDIGO ORIGINAL (100% INTACTO): Ele só roda se NÃO for o primeiro card
         while (tentativas < maxTentativas && !encontrado) {
-            // Instancia o seletor a cada volta para ler o estado atual do DOM do Android
             const cardAlvo = await $(`android=new UiSelector().text("${textoDoCard}")`);
 
-            // isExisting pega o elemento mesmo se ele estiver 1% visível na borda direita
             if (await cardAlvo.isExisting()) {
                 console.log(`✓ Card "${textoDoCard}" entrou no radar da tela! Aplicando empurrão final...`);
 
-                // ARRRASTO DE AJUSTE CRUCIAL: Traz mais 30% do carrossel para centralizar o alvo
                 const startXCurto = Math.round(location.x + (size.width * 0.70));
                 const endXCurto = Math.round(location.x + (size.width * 0.40));
 
@@ -159,12 +151,11 @@ async swipeAteOCard(textoDoCard, descricaoDoCard) {
                     .up({ button: 0 })
                     .perform();
 
-                await browser.pause(2000); // Aguarda o carrossel estabilizar no meio da tela
+                await browser.pause(2000);
                 encontrado = true;
-                break; // Encontrou e centralizou, sai do loop imediatamente!
+                break;
             }
 
-            // Se ainda não achou o card no DOM, executa o seu swipe longo padrão
             console.log(`[SwipePage] Avançando carrossel... Tentativa ${tentativas + 1}/${maxTentativas}`);
             await browser.action('pointer', { parameters: { pointerType: 'touch' } })
                 .move({ duration: 0, x: startX, y: centerY })
@@ -177,7 +168,6 @@ async swipeAteOCard(textoDoCard, descricaoDoCard) {
             tentativas++;
         }
 
-        // Validação final e clique no elemento estavelmente posicionado
         const elementoFinal = await $(`android=new UiSelector().text("${textoDoCard}")`);
         await elementoFinal.waitForDisplayed({
             timeout: 6000,
